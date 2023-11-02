@@ -7,7 +7,7 @@ const port =process.env.PORT || 3000
 // middleware
 app.use(cors());
 app.use(express.json());
-
+// console.log(process.env.DB_pass);
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_user}:${process.env.DB_pass}@cluster0.ioitfil.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -23,9 +23,10 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
+    await client.connect();
 
     const serviceCollection=client.db('carDoctor').collection('service');
+    const bookingCollection=client.db('carDoctor').collection('booking');
 
     app.get('/service', async(req, res) => {
       const cursor=serviceCollection.find();
@@ -37,20 +38,33 @@ async function run() {
       const id=req.params.id;
       const query={_id:new ObjectId(id)};
       const options = {
-        // Include only the `title` and `imdb` fields in the returned document
-        projection: { title: 1, service_id: 1,price: 1 },
+        projection: { title: 1, service_id: 1,price: 1,img:1 },
       };
 
       const result=await serviceCollection.findOne(query,options);
       res.send(result);
     })
 
+    // Bookings collection
+    app.post('/bookings' ,async(req,res)=>{
+      const booking=req.body;
+      console.log(booking)
+      const result=await bookingCollection.insertOne(booking);
+      res.send(result);
+    });
 
-    // Send a ping to confirm a successful connection
+    app.get('/bookings',async(req,res)=>{
+      let quary={};
+      if (req.query.email) {
+          quary={email:req.query.email}
+      }
+      const result=await bookingCollection. find(). toArray();
+      res.send(result)
+    })
+
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
-    // Ensures that the client will close when you finish/error
     // await client.close();
   }
 }
