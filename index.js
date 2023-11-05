@@ -1,13 +1,20 @@
 const express = require('express')
 const cors = require('cors')
+const cookiePerser = require('cookie-parser')
 const jwt = require('jsonwebtoken');
 const app = express()
 require('dotenv').config()
 const port =process.env.PORT || 3000
 
 // middleware
-app.use(cors());
+app.use(cors({
+  origin:['http://localhost:5173'],
+  credentials:true
+}));
 app.use(express.json());
+app.use(cookiePerser());
+
+
 // console.log(process.env.DB_pass);
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_user}:${process.env.DB_pass}@cluster0.ioitfil.mongodb.net/?retryWrites=true&w=majority`;
@@ -35,7 +42,6 @@ async function run() {
       .cookie('token',token , {
         httpOnly:true,
         secure:false,
-        sameSite: 'none'
       })
       .send({success:true})
     })
@@ -70,6 +76,7 @@ async function run() {
 
     app.get('/bookings',async(req,res)=>{
       let quary={};
+      console.log('token',req.cookies.token);
       if (req.query.email) {
           quary={email:req.query.email}
       }
